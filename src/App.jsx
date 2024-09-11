@@ -7,6 +7,8 @@ import {
 } from "react-router-dom"
 import TodoList from './TodoList.jsx'
 import AddTodoForm from './AddTodoForm.jsx'
+import styles from './App.module.css';
+import './App.css';
 
 const url = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`
 
@@ -123,7 +125,7 @@ const App = () => {
             <h1>Todo List</h1>
 
             <Link to="/new">
-              <button>Add New</button>
+              <button className={styles.addTodoButton}>Add New</button>
             </Link>
 
             {isLoading ? (

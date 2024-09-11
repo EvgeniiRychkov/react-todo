@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useNavigate } from "react-router-dom"
 import InputWithLabel from './InputWithLabel.jsx'
+import styles from './AddTodoForm.module.css'
 
 const AddTodoForm = ({onAddTodo}) => {
   const [todoTitle, setTodoTitle] = React.useState("");
@@ -19,18 +20,22 @@ const AddTodoForm = ({onAddTodo}) => {
   }
 
   return (
-    <form onSubmit={handleAddTodo}>
-      <Link to="/">
-        <button type="button">Back</button>
-      </Link>
-
+    <>
       <h1>New Todo List</h1>
 
-      <InputWithLabel todoTitle={todoTitle} handleTitleChange={handleTitleChange}>
-        Title:
-      </InputWithLabel>
-      <button type="submit">Add</button>
-    </form>
+      <Link to="/">
+        <button className={styles.backButton} type="button">Back</button>
+      </Link>
+
+      <form onSubmit={handleAddTodo}>
+        <div className={styles.container}>
+          <InputWithLabel todoTitle={todoTitle} handleTitleChange={handleTitleChange}>
+            Title:
+          </InputWithLabel>
+          <button className={styles.addTodoButton} type="submit">Add</button>
+        </div>
+      </form>
+    </>
   )
 }
 
