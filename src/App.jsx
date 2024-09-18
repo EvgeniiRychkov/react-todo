@@ -7,6 +7,8 @@ import {
 } from "react-router-dom"
 import TodoList from './TodoList.jsx'
 import AddTodoForm from './AddTodoForm.jsx'
+import styles from './App.module.css';
+import './App.css';
 
 const url = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`
 
@@ -118,12 +120,12 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={
+        <Route path={import.meta.env.VITE_BASE_PATH} element={
           <>
             <h1>Todo List</h1>
 
-            <Link to="/new">
-              <button>Add New</button>
+            <Link to={`${import.meta.env.VITE_BASE_PATH}/new`}> 
+              <button className={styles.addTodoButton}>Add New</button>
             </Link>
 
             {isLoading ? (
@@ -133,7 +135,7 @@ const App = () => {
             )}
           </>
         }/>
-        <Route path="/new" element={
+        <Route path={`${import.meta.env.VITE_BASE_PATH}/new`} element={
             <AddTodoForm onAddTodo={addTodo} />
         }/>
       </Routes>
