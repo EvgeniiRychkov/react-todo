@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useNavigate } from "react-router-dom"
 import InputWithLabel from './InputWithLabel.jsx'
 import styles from './AddTodoForm.module.css'
+import PropTypes from 'prop-types'
 
 const AddTodoForm = ({onAddTodo}) => {
   const [todoTitle, setTodoTitle] = React.useState("");
@@ -38,5 +39,10 @@ const AddTodoForm = ({onAddTodo}) => {
     </>
   )
 }
+
+AddTodoForm.propTypes = {
+  onAddTodo: PropTypes.func.isRequired,
+};
+
 
 export default AddTodoForm
