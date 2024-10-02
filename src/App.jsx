@@ -15,7 +15,27 @@ const url = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID
 const App = () => {
   const [todoList, setTodoList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isAscending, setIsAscending] = React.useState(true);
 
+  React.useEffect(() => {
+    fetchData();   
+  }, []);
+
+  const toggleSortOrder = () => {
+    setIsAscending(!isAscending);
+    const sortedTodoList = todoSort(todoList, !isAscending);
+    setTodoList(sortedTodoList);
+  };
+
+  const todoSort = (todos, asc) => {
+    return todos.sort((a, b) => {
+      if (asc) {
+        return a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1;
+      } else {
+        return a.title.toLowerCase() < b.title.toLowerCase() ? 1 : -1;
+      }
+    });
+  }
 
   const fetchData = async() => {
     const options = {
@@ -44,17 +64,14 @@ const App = () => {
         return newTodo
       });
 
-      setTodoList(todos);
-      setIsLoading(false);
+      const sortedTodoList = todoSort(todos, isAscending);
 
+      setTodoList(sortedTodoList);
+      setIsLoading(false);
     } catch (error) {
       console.log(error.message)
     }
   };
-
-  React.useEffect(() => {
-    fetchData();  
-  }, []);
 
   const addTodo = async (newTodoTitle) => {
     const newTodoData = {
@@ -85,7 +102,8 @@ const App = () => {
         id: dataResponse.id,
         title: dataResponse.fields.title
       }
-      setTodoList([...todoList, newTodo]);
+      setTodoList(todoSort([...todoList, newTodo], isAscending));
+
     } catch (error) {
       console.log(error.message)
     }
@@ -131,7 +149,13 @@ const App = () => {
             {isLoading ? (
               <p>Loading ...</p>
             ) : (
-              <TodoList todoList={todoList} onRemoveTodo={removeTodo}/>  
+              <>
+                <button onClick={toggleSortOrder}>
+                  Сортировка: {isAscending ? 'По возрастанию (Asc)' : 'По убыванию (Desc)'}
+                </button>
+
+                <TodoList todoList={todoList} onRemoveTodo={removeTodo}/>  
+              </>
             )}
           </>
         }/>
