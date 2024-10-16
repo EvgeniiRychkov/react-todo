@@ -1,11 +1,7 @@
-.label {
-  margin-right: 5px;
-}
-
-.input {
+.inputTitle {
   border: 1px solid #ccc;
   border-radius: 5px;
   font-size: 16px;
-  padding: 10px;
+  padding: 6px;
   width: 100%;
 }
