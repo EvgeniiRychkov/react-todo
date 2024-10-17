@@ -29,12 +29,17 @@ body {
   min-height: 100vh;
 
   font-family: 'Georgia', serif;
-  background-color: #f0f4f8;
+  background-color: #d2b48c; /* светло-коричневый цвет для фона стола */
+  background-image: url('./assets/images/wood-pattern.png');
 }
 
 h1 {
   font-size: 2em;
   line-height: 1.1;
+  font-style: italic;
+}
+
+h2 {
   font-style: italic;
 }
 

@@ -40,3 +40,31 @@
 .read-the-docs {
   color: #888;
 }
+
+.paper {
+  background-color: white;
+  width: 8.5in;
+  height: 11in;
+  margin: 20px auto;
+  padding: 2rem;
+  padding-top: 5px;
+  border: 1px solid #ddd;
+}
+
+.table td {
+  padding-bottom: 0px;
+  vertical-align: bottom;
+}
+
+.button-column {
+  padding-bottom: 5px !important;
+}
+
+.title-column {
+  text-align: left;
+}
+
+.delete-column {
+  padding-right: 0px !important;
+  width: 42px !important;
+}

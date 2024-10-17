@@ -7,19 +7,35 @@ import {
 } from "react-router-dom"
 import TodoList from './components/TodoList.jsx'
 import AddTodoForm from './components/AddTodoForm.jsx'
-import styles from './App.module.css';
+import TodoDetailForm from './components/TodoDetailForm.jsx'
 import './App.css';
+import pencilImage from './assets/images/pencil.png';
 
-const url = `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/${import.meta.env.VITE_TABLE_NAME}`
+const url = `${import.meta.env.VITE_RAILS_API_PATH}`
 
 const App = () => {
   const [todoList, setTodoList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isAscending, setIsAscending] = React.useState(true);
 
+  const [elapsedTime, setElapsedTime] = React.useState(0);
+  const [isRunning, setIsRunning] = React.useState(false);
+  const [intervalId, setIntervalId] = React.useState(null);
+
   React.useEffect(() => {
     fetchData();   
   }, []);
+
+  React.useEffect(() => {
+    if (isRunning) {
+      const id = setInterval(() => {
+        setElapsedTime(prevTime => prevTime + 1);
+      }, 1000);
+      setIntervalId(id);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [isRunning]);
 
   const toggleSortOrder = () => {
     setIsAscending(!isAscending);
@@ -41,26 +57,34 @@ const App = () => {
     const options = {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_AIRTABLE_API_TOKEN}`,
+        'Content-Type': 'application/json'
       },
     }
 
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url + '/tasks.json', options);
 
       if (!response.ok) {
+        console.log(response);
         const message = `Error: ${response.status}`;
         throw new Error(message);
       }
 
       const data = await response.json();
-
-      const todos = data.records.map((todo) => {
+      if (data.current_task_start) {
+        setElapsedTime((new Date() - new Date(data.current_task_start)) / 1000);
+        setIsRunning(true);
+      }
+     
+      const todos = data.tasks.map((todo) => {
         const newTodo = {
           id: todo.id,
-          title: todo.fields.title
+          title: todo.text,
+          total_duration: todo.total_duration,
+          today_duration: todo.today_duration,
+          isCurrent: todo.current,
         }
-
+        
         return newTodo
       });
 
@@ -75,8 +99,8 @@ const App = () => {
 
   const addTodo = async (newTodoTitle) => {
     const newTodoData = {
-      fields: {
-        title: newTodoTitle,
+      task: {
+        text: newTodoTitle,
       },
     };
 
@@ -84,13 +108,12 @@ const App = () => {
       method: 'POST',
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_AIRTABLE_API_TOKEN}`,
       },
       body: JSON.stringify(newTodoData),
     }
 
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url + '/tasks', options);
 
       if (!response.ok) {
         const message = `Error: ${response.status}`;
@@ -100,7 +123,7 @@ const App = () => {
       const dataResponse = await response.json();
       const newTodo = {
         id: dataResponse.id,
-        title: dataResponse.fields.title
+        title: dataResponse.text,
       }
       setTodoList(todoSort([...todoList, newTodo], isAscending));
 
@@ -112,13 +135,10 @@ const App = () => {
   const removeTodo = async (id) => {
     const options = {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_AIRTABLE_API_TOKEN}`,
-      },
     }
 
     try {
-      const response = await fetch(`${url}/${id}`, options);
+      const response = await fetch(`${url}/tasks/${id}`, options);
 
       if (!response.ok) {
         const message = `Error: ${response.status}`;
@@ -135,35 +155,93 @@ const App = () => {
     }
   };
 
+  const startTodo = async (id) => {
+    const options = {
+      method: 'POST',
+    }
+
+    try {
+      const response = await fetch(`${url}/tasks/${id}/start`, options);
+
+      if (!response.ok) {
+        const message = `Error: ${response.status}`;
+        throw new Error(message);
+      }
+    } catch (error) {
+      console.log(error.message)
+    }
+
+    const updatedTodos = todoList.map(item => {
+      return { ...item, isCurrent: item.id === id };
+    });
+    
+    fetchData();
+  };
+
+  const stopTodo = async (id) => {
+    const options = {
+      method: 'POST',
+    }
+
+    try {
+      const response = await fetch(`${url}/tasks/${id}/stop`, options);
+
+      if (!response.ok) {
+        const message = `Error: ${response.status}`;
+        throw new Error(message);
+      }
+
+      const updatedTodos = todoList.map(item => {
+        return { ...item, isCurrent: false };
+      });
+
+      fetchData();
+    } catch (error) {
+      console.log(error.message)
+    }
+  };
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path={import.meta.env.VITE_BASE_PATH} element={
-          <>
-            <h1>Todo List</h1>
-
-            <Link to={`${import.meta.env.VITE_BASE_PATH}/new`}> 
-              <button className={styles.addTodoButton}>Add New</button>
-            </Link>
-
-            {isLoading ? (
-              <p>Loading ...</p>
-            ) : (
+    <div className="container d-flex justify-content-center">
+      <div className="paper shadow">
+        <BrowserRouter>
+          <Routes>
+            <Route path={import.meta.env.VITE_BASE_PATH} element={
               <>
-                <button onClick={toggleSortOrder}>
-                  Сортировка: {isAscending ? 'По возрастанию (Asc)' : 'По убыванию (Desc)'}
-                </button>
+                <div className="text-end">
+                  <button onClick={toggleSortOrder}>
+                    Sort: {isAscending ? 'Title (Asc)' : 'Title (Desc)'}
+                  </button>
+                </div>
+                <div className="d-flex align-items-center justify-content-center" style={{ marginBottom: '20px' }}>
+                  <img src={pencilImage} alt="Logo" style={{ width: '50px', marginRight: '10px', marginBottom: '10px' }} />
+                  <h1 className="text-center">Todo List</h1>
+                </div>
 
-                <TodoList todoList={todoList} onRemoveTodo={removeTodo}/>  
-              </>
-            )}
-          </>
-        }/>
-        <Route path={`${import.meta.env.VITE_BASE_PATH}/new`} element={
-            <AddTodoForm onAddTodo={addTodo} />
-        }/>
-      </Routes>
-    </BrowserRouter>
+                <AddTodoForm onAddTodo={addTodo} />
+
+                {isLoading ? (
+                  <p>Loading ...</p>
+                ) : (
+                  <TodoList 
+                    todoList={todoList}
+                    elapsedTime={elapsedTime}
+                    onRemoveTodo={removeTodo} 
+                    onStartTodo={startTodo} 
+                    onStopTodo={stopTodo}/>  
+                )}  
+              </>           
+            }/>
+            <Route path={`${import.meta.env.VITE_BASE_PATH}/new`} element={
+              <AddTodoForm onAddTodo={addTodo} />
+            }/>
+            <Route path={`${import.meta.env.VITE_BASE_PATH}/todos/:id`} element={
+              <TodoDetailForm todoList={todoList}/>
+            } />      
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </div>
   )
 }
 
