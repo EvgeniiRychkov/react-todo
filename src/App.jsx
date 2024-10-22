@@ -16,7 +16,14 @@ const url = `${import.meta.env.VITE_RAILS_API_PATH}`
 const App = () => {
   const [todoList, setTodoList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isAscending, setIsAscending] = React.useState(true);
+
+  // const [sortBy, setSortBy] = React.useState(() => {
+  //   return localStorage.getItem('sortBy') || 'Title';
+  // });
+
+  const [sortBy, setSortBy] = React.useState(() => {
+    return localStorage.getItem('sortBy') || 'Title';
+  });
 
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isRunning, setIsRunning] = React.useState(false);
@@ -25,6 +32,10 @@ const App = () => {
   React.useEffect(() => {
     fetchData();   
   }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem('sortBy', sortBy);
+  }, [sortBy]);
 
   React.useEffect(() => {
     if (isRunning) {
@@ -38,17 +49,23 @@ const App = () => {
   }, [isRunning]);
 
   const toggleSortOrder = () => {
-    setIsAscending(!isAscending);
-    const sortedTodoList = todoSort(todoList, !isAscending);
+    let sortedTodoList;
+    if (sortBy == 'Title') {
+      setSortBy('Updated');  
+      sortedTodoList = todoSort(todoList, 'Updated');
+    } else {
+      setSortBy('Title');  
+      sortedTodoList = todoSort(todoList, 'Title');
+    }
     setTodoList(sortedTodoList);
   };
 
-  const todoSort = (todos, asc) => {
+  const todoSort = (todos, sorting) => {
     return todos.sort((a, b) => {
-      if (asc) {
+      if (sorting == 'Title') {
         return a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1;
       } else {
-        return a.title.toLowerCase() < b.title.toLowerCase() ? 1 : -1;
+        return a.updated_at < b.updated_at ? 1 : -1;
       }
     });
   }
@@ -83,12 +100,13 @@ const App = () => {
           total_duration: todo.total_duration,
           today_duration: todo.today_duration,
           isCurrent: todo.current,
+          updated_at: todo.updated_at,
         }
         
         return newTodo
       });
 
-      const sortedTodoList = todoSort(todos, isAscending);
+      const sortedTodoList = todoSort(todos, sortBy);
 
       setTodoList(sortedTodoList);
       setIsLoading(false);
@@ -125,7 +143,7 @@ const App = () => {
         id: dataResponse.id,
         title: dataResponse.text,
       }
-      setTodoList(todoSort([...todoList, newTodo], isAscending));
+      setTodoList(todoSort([...todoList, newTodo], sortBy));
 
     } catch (error) {
       console.log(error.message)
@@ -210,7 +228,7 @@ const App = () => {
               <>
                 <div className="text-end">
                   <button onClick={toggleSortOrder}>
-                    Sort: {isAscending ? 'Title (Asc)' : 'Title (Desc)'}
+                    Sort by: {sortBy}
                   </button>
                 </div>
                 <div className="d-flex align-items-center justify-content-center" style={{ marginBottom: '20px' }}>
