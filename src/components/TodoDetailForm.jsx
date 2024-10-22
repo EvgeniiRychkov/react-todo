@@ -86,8 +86,17 @@ const TodoDetailForm = ({ todoList }) => {
           text: record.text,
           created_at: record.created_at,
           task_id: id,
+          priority: record.priority,
         };
         return newRecord;
+      });
+
+      const sortedRecords = newRecords.sort((a, b) => {
+        if (b.priority !== a.priority) {
+          return b.priority - a.priority;
+        }
+
+        return a.created_at - b.created_at;
       });
 
       const newCompletedRecords = data.completed_records.map((record) => {
@@ -112,7 +121,7 @@ const TodoDetailForm = ({ todoList }) => {
         return newRecord;
       });
 
-      setRecords(newRecords);
+      setRecords(sortedRecords);
       setCompletedRecords(newCompletedRecords);
       setCanceledRecords(newCanceledRecords);
       setIsLoading(false);
@@ -193,6 +202,37 @@ const TodoDetailForm = ({ todoList }) => {
     fetchData();
   };
 
+  const handleSetPriority = async (record_id, priority) => {
+    setIsLoading(true);
+
+    const newPriorityData = {
+      record: {
+        priority: priority,
+      },
+    };
+
+    const options = {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newPriorityData),
+    }
+
+    try {
+      const response = await fetch(`${url}/tasks/${id}/records/${record_id}/set_priority`, options);
+
+      if (!response.ok) {
+        const message = `Error: ${response.status}`;
+        throw new Error(message);
+      }
+    } catch (error) {
+      console.log(error.message)
+    }
+
+    fetchData();
+  }
+
   return (
     <>
       <div className="d-flex justify-content-start">
@@ -242,6 +282,9 @@ const TodoDetailForm = ({ todoList }) => {
                       <th>Created at</th>
                       <th></th>
                       <th></th>
+                      <th></th>
+                      <th></th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -251,6 +294,7 @@ const TodoDetailForm = ({ todoList }) => {
                         item={item} 
                         onDoneRecord={handleDoneRecord} 
                         onCancelRecord={handleCancelRecord} 
+                        onSetPriority={handleSetPriority}
                       />
                     ))}
                   </tbody>
