@@ -6,6 +6,7 @@ import RecordListItem from './RecordListItem.jsx'
 import CompletedListItem from './CompletedListItem.jsx'
 import InputWithLabel from './InputWithLabel.jsx'
 import { Nav, Tab } from 'react-bootstrap';
+import Calendar from './MyCalendar.jsx'
 
 const url = `${import.meta.env.VITE_RAILS_API_PATH}`
 
@@ -15,7 +16,10 @@ const TodoDetailForm = ({ todoList }) => {
   const [records, setRecords] = React.useState([]);
   const [completedRecords, setCompletedRecords] = React.useState([]);
   const [canceledRecords, setCanceledRecords] = React.useState([]);
+  const [taskHistory, setTaskHistory] = React.useState([]); 
   const [isLoading, setIsLoading] = React.useState(true);
+  const [maxHours, setMaxHours] = React.useState(0);
+  
   const [recordTitle, setRecordTitle] = React.useState("");
 
   React.useEffect(() => {
@@ -121,9 +125,20 @@ const TodoDetailForm = ({ todoList }) => {
         return newRecord;
       });
 
+      const newHistory = Object.entries(data.history).reduce((acc, [date, hours]) => {
+        acc[new Date(date).toDateString()] = hours;
+        return acc;
+      }, {});
+
+      const newMaxHours = Object.entries(data.history).reduce((max, [date, hours]) => {
+        return Math.max(max, hours);
+      }, 0);
+
       setRecords(sortedRecords);
       setCompletedRecords(newCompletedRecords);
       setCanceledRecords(newCanceledRecords);
+      setTaskHistory(newHistory);
+      setMaxHours(newMaxHours);
       setIsLoading(false);
     } catch (error) {
       console.log(error.message)
@@ -245,17 +260,6 @@ const TodoDetailForm = ({ todoList }) => {
 
       <h2 style={{ marginBottom: '30px' }}>{todo.title}</h2>
       
-      <form onSubmit={handleAddRecord}>
-        <div className='container row align-items-center' style={{ marginBottom: '40px' }}>
-            <InputWithLabel title={recordTitle} handleTitleChange={handleTitleChange} inputID='recordTitle'>
-              New task:
-            </InputWithLabel>
-          <div className="col-auto">
-            <button className='btn btn-success' type="submit">Add</button>
-          </div>
-        </div>
-      </form>
-
       {isLoading ? (
         <p>Loading ...</p>
       ) : (
@@ -271,10 +275,24 @@ const TodoDetailForm = ({ todoList }) => {
               <Nav.Item>
                 <Nav.Link eventKey="canceled">Deleted</Nav.Link>
               </Nav.Item>
+              <Nav.Item>
+                <Nav.Link eventKey="history">History</Nav.Link>
+              </Nav.Item>
             </Nav>
 
             <Tab.Content>
               <Tab.Pane eventKey="active">
+                <form onSubmit={handleAddRecord}>
+                  <div className='container row align-items-center' style={{ marginTop: '30px' }}>
+                      <InputWithLabel title={recordTitle} handleTitleChange={handleTitleChange} inputID='recordTitle'>
+                        New task:
+                      </InputWithLabel>
+                    <div className="col-auto">
+                      <button className='btn btn-success' type="submit">Add</button>
+                    </div>
+                  </div>
+                </form>
+
                 <table className="table" style={{ marginTop: '20px' }}>
                   <thead>
                     <tr>
@@ -341,6 +359,13 @@ const TodoDetailForm = ({ todoList }) => {
                     ))}
                   </tbody>
                 </table>
+              </Tab.Pane>
+
+              <Tab.Pane eventKey="history">
+                <Calendar 
+                  taskHistory={taskHistory}
+                  maxHours={maxHours}
+                />
               </Tab.Pane>
             </Tab.Content>
           </Tab.Container>

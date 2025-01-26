@@ -8,6 +8,7 @@ import {
 import TodoList from './components/TodoList.jsx'
 import AddTodoForm from './components/AddTodoForm.jsx'
 import TodoDetailForm from './components/TodoDetailForm.jsx'
+import GeneralDiagram from './components/GeneralDiagram.jsx'
 import './App.css';
 import pencilImage from './assets/images/pencil.png';
 
@@ -17,10 +18,6 @@ const App = () => {
   const [todoList, setTodoList] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // const [sortBy, setSortBy] = React.useState(() => {
-  //   return localStorage.getItem('sortBy') || 'Title';
-  // });
-
   const [sortBy, setSortBy] = React.useState(() => {
     return localStorage.getItem('sortBy') || 'Title';
   });
@@ -28,6 +25,7 @@ const App = () => {
   const [elapsedTime, setElapsedTime] = React.useState(0);
   const [isRunning, setIsRunning] = React.useState(false);
   const [intervalId, setIntervalId] = React.useState(null);
+  const [diagramData, setDiagramData] = React.useState({});
 
   React.useEffect(() => {
     fetchData();   
@@ -82,7 +80,6 @@ const App = () => {
       const response = await fetch(url + '/tasks.json', options);
 
       if (!response.ok) {
-        console.log(response);
         const message = `Error: ${response.status}`;
         throw new Error(message);
       }
@@ -108,8 +105,12 @@ const App = () => {
 
       const sortedTodoList = todoSort(todos, sortBy);
 
+      const newDiagramData = data.diagram_data;
+
+      setDiagramData(newDiagramData);
       setTodoList(sortedTodoList);
       setIsLoading(false);
+
     } catch (error) {
       console.log(error.message)
     }
@@ -219,47 +220,72 @@ const App = () => {
     }
   };
 
+  const exampleWeekData = [
+    {
+      date: '2024-10-21',
+      activities: {
+        9: { activity: 'Meeting', activityType: 'meeting' },
+        10: { activity: 'Work', activityType: 'work' },
+        12: { activity: 'Lunch', activityType: 'break' },
+        14: { activity: 'Work', activityType: 'work' },
+        18: { activity: 'Rest', activityType: 'rest' },
+      },
+    },
+    // Другие дни
+  ];
+
   return (
-    <div className="container d-flex justify-content-center">
-      <div className="paper shadow">
-        <BrowserRouter>
-          <Routes>
-            <Route path={import.meta.env.VITE_BASE_PATH} element={
-              <>
-                <div className="text-end">
-                  <button onClick={toggleSortOrder}>
-                    Sort by: {sortBy}
-                  </button>
-                </div>
-                <div className="d-flex align-items-center justify-content-center" style={{ marginBottom: '20px' }}>
-                  <img src={pencilImage} alt="Logo" style={{ width: '50px', marginRight: '10px', marginBottom: '10px' }} />
-                  <h1 className="text-center">Todo List</h1>
-                </div>
+    <>
+      <div className="container d-flex justify-content-center">
+        <div className="paper shadow">
+          <BrowserRouter>
+            <Routes>
+              <Route path={import.meta.env.VITE_BASE_PATH} element={
+                <>
+                  <div className="text-end">
+                    <button onClick={toggleSortOrder}>
+                      Sort by: {sortBy}
+                    </button>
+                  </div>
+                  <div className="d-flex align-items-center justify-content-center" style={{ marginBottom: '20px' }}>
+                    <img src={pencilImage} alt="Logo" style={{ width: '50px', marginRight: '10px', marginBottom: '10px' }} />
+                    <h1 className="text-center">Todo List</h1>
+                  </div>
 
+                  <AddTodoForm onAddTodo={addTodo} />
+
+                  {isLoading ? (
+                    <p>Loading ...</p>
+                  ) : (
+                    <TodoList 
+                      todoList={todoList}
+                      elapsedTime={elapsedTime}
+                      onRemoveTodo={removeTodo} 
+                      onStartTodo={startTodo} 
+                      onStopTodo={stopTodo}/>  
+                  )}  
+                </>           
+              }/>
+              <Route path={`${import.meta.env.VITE_BASE_PATH}/new`} element={
                 <AddTodoForm onAddTodo={addTodo} />
-
-                {isLoading ? (
-                  <p>Loading ...</p>
-                ) : (
-                  <TodoList 
-                    todoList={todoList}
-                    elapsedTime={elapsedTime}
-                    onRemoveTodo={removeTodo} 
-                    onStartTodo={startTodo} 
-                    onStopTodo={stopTodo}/>  
-                )}  
-              </>           
-            }/>
-            <Route path={`${import.meta.env.VITE_BASE_PATH}/new`} element={
-              <AddTodoForm onAddTodo={addTodo} />
-            }/>
-            <Route path={`${import.meta.env.VITE_BASE_PATH}/todos/:id`} element={
-              <TodoDetailForm todoList={todoList}/>
-            } />      
-          </Routes>
-        </BrowserRouter>
+              }/>
+              <Route path={`${import.meta.env.VITE_BASE_PATH}/todos/:id`} element={
+                <TodoDetailForm todoList={todoList}/>
+              } />      
+            </Routes>
+          </BrowserRouter>
+        </div>
       </div>
-    </div>
+      <div className="container d-flex justify-content-center">
+        <div className="paper shadow">
+          {isLoading ? (
+            <p>Loading ...</p>
+          ) : (
+            <GeneralDiagram diagramData={diagramData}/>
+          )}  
+        </div>
+      </div>
+    </>
   )
 }
 
